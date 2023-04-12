@@ -109,6 +109,14 @@ class AddressBook(UserDict):
                 break
             yield result
             start += page
+    def open(self):
+        byte_string = open('contacts.txt', 'r')
+        contacts = pickle.loads(byte_string)
+        byte_string.close()
+    def close(self):
+        byte_string = open('contacts.txt', 'w')
+        byte_string =pickle.dumps(contacts)
+        byte_string.close()
 
     
    
@@ -206,9 +214,7 @@ def find(*args):
     print(result)   
 
 def exit(*args):
-    byte_string = open('contacts.txt', 'w')
-    byte_string =pickle.dumps(contacts)
-    byte_string.close()
+    contacts.close()
     print('Bye')
     return byte_string
 
@@ -245,9 +251,9 @@ def parse_input(text):
     
 
 def main():
-    byte_string = open('contacts.txt', 'r')
-    contacts = pickle.loads(byte_string)
-    byte_string.close()
+    
+    contacts.open()
+   
     while True:
 
         user_input = input(">>>")
