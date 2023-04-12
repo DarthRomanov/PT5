@@ -198,10 +198,10 @@ def find(*args):
     for i, j in contacts:
         a = re.search('{ch}', i)
         b = re.search('{ch}', j)
-        if a != 0:
+        if a != None:
             result.append(contacts[i])
             continue
-        if b != 0:
+        if b != None:
             result.append(contacts[i])
     print(result)   
 
