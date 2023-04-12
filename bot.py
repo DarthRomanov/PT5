@@ -204,8 +204,8 @@ def find(*args):
     result = []
     ch = f"{args[0]}"
     for i, j in contacts:
-        a = re.search('{ch}', i)
-        b = re.search('{ch}', j)
+        a = re.search({ch}, i)
+        b = re.search({ch}, j)
         if a != None:
             result.append(contacts[i])
             continue
