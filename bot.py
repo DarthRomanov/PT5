@@ -149,6 +149,7 @@ def add_ct(*args):
     else:
         birthday = Birthday(args[2])
         rec = Record(name, phone, birthday)
+    contacts.close()
     return contacts.add_record(rec)
 
 @input_error    
@@ -159,6 +160,7 @@ def change(*args):
     rec = contacts.get(name.value)
     if rec:
         return rec.change_phone(phone, new_phone)
+    contacts.close()
     return f'No record with name {name}'
 
 def delete(*args):
@@ -168,6 +170,7 @@ def delete(*args):
     rec.delete_phone(phone)
     if rec:
         return rec.delete_phone(phone)
+    contacts.close()
     return f'No record with name {name}'
 
 def birthday_date(*args):
@@ -206,17 +209,17 @@ def find(*args):
     for i, j in contacts:
         a = re.search({ch}, i)
         b = re.search({ch}, j)
-        if a != None:
+        if a:
             result.append(contacts[i])
             continue
-        if b != None:
+        if b:
             result.append(contacts[i])
     print(result)   
 
 def exit(*args):
     contacts.close()
     print('Bye')
-    return byte_string
+    
 
 def no_command(*args):
     return 'Unknown command. Try again'
