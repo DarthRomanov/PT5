@@ -110,17 +110,19 @@ class AddressBook(UserDict):
             yield result
             start += page
     def open(self):
-        byte_string = open('contacts.txt', 'r')
-        contacts = pickle.loads(byte_string)
-        byte_string.close()
+        try:
+            with open('contacts.bin', 'rb') as f:
+                contacts = AddressBook(pickle.load(f))
+        except EOFError:
+            pass
+        
     def close(self):
-        byte_string = open('contacts.txt', 'w')
-        byte_string =pickle.dumps(contacts)
-        byte_string.close()
-
+        with open('contacts.bin', 'wb') as f:
+            pickle.dump(contacts, f)
     
    
 contacts = AddressBook()
+contacts.open()
 
 
 
@@ -144,11 +146,14 @@ def hello(*args):
 def add_ct(*args):
     name = Name(args[0])
     phone = Phone(args[1])
-    if len(args[2]) == 0:
-        rec = Record(name, phone)
-    else:
+    try:
         birthday = Birthday(args[2])
-        rec = Record(name, phone, birthday)
+    except IndexError:
+        rec = Record(name, phone)
+        contacts.close()
+        return contacts.add_record(rec)
+    
+    rec = Record(name, phone, birthday)
     contacts.close()
     return contacts.add_record(rec)
 
@@ -255,7 +260,7 @@ def parse_input(text):
 
 def main():
     
-    contacts.open()
+    
    
     while True:
 
