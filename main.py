@@ -22,6 +22,19 @@ def main():
             help_correct_input = input('Do you mean, that you would like to see available commands? y/n >>> ')
             print("If you'd like to see available comands, use this command  ->  help") \
                 if help_correct_input.lower() in yes_input else print('Please, use the available commands')
+        #elif any(word in first_input.lower() for word in ['note ', 'not', 'noter', 'nots', 'message', 'reminder', 'record', 'notes', 'notation', 'comment', 'remark']):
+        #    note_correct_input = input('Do you mean, that you would like to work with notes? 1. Add. 2. Search by note. 3. Remove. 4. Edit.  1/2/3/4 >>> ')
+        #    if note_correct_input == '1':
+        #        print("If you'd like to add note, use this command  ->  add, note_name, text")
+        #    elif note_correct_input == '2':
+        #        print("If you'd like to search by note, use this command  ->  search, text")
+        #    elif note_correct_input == '3':
+        #        print("If you'd like to remove note, use this command  ->  remove, note_name")
+        #    elif note_correct_input == '4':
+        #        print("If you'd like to edit the note, use this command  ->  edit, note_name, text")
+        #    else:
+        #        print(supports)
+        
         elif any(word in first_input.lower() for word in [' add birthday', ' birthday ', 'birthday ', 'bday', 'birthdate', 'bd', 'birth', 'date']):
                 birthday_correct_input = input('Do you mean, that you would like to add birthday date to a contact? y/n >>> ')
                 print("If you'd like to add birthday date to a contact, use this command  ->  add birthday, name, day.month.year") \
@@ -61,19 +74,6 @@ def main():
         #            print("If you'd like to remove tag, use this command  ->  remove, note_name, tag")
         #        else:
         #            print(supports)
-
-        #elif any(word in first_input.lower() for word in ['not', 'noter', 'nots', 'message', 'reminder', 'record', 'notes', 'notation', 'comment', 'remark']):
-        #    note_correct_input = input('Do you mean, that you would like to work with notes? 1. Add. 2. Search by note. 3. Remove. 4. Edit.  1/2/3/4 >>> ')
-        #    if note_correct_input == '1':
-        #        print("If you'd like to add note, use this command  ->  add, note_name, text")
-        #    elif note_correct_input == '2':
-        #        print("If you'd like to search by note, use this command  ->  search, text")
-        #    elif note_correct_input == '3':
-        #        print("If you'd like to remove note, use this command  ->  remove, note_name")
-        #    elif note_correct_input == '4':
-        #        print("If you'd like to edit the note, use this command  ->  edit, note_name, text")
-        #    else:
-        #        print(supports)
 
         else:
             user_input = parcer(first_input)
