@@ -181,7 +181,7 @@ class Addressbook(UserDict):
 from collections import UserDict # Імпорт необхідних модулів 
 from datetime import date
 import json
-
+import pickle
 
 class Note(): 
 
@@ -271,20 +271,39 @@ class Notebook(UserDict):
                 result += f"Tag {tag} not found in note {note_name}\n"
         return result
 
+    def to_dict(self):
+        data = {}
+        for name, note in self.data.items():
+            data[name] = {"text": note.value,"tags": note.tags}
+        return data
 
-    # def search_by_tag(self, *tags):    # Якщо не вводимо слово, показуємо усі нотатки, сортовані за тегами в порядку абетки, нотатки без тегів показуємо в кінці переліку. (Зараз працює у щедрому режимі, збіг із навіть одного слова дає позитивний результат)
-    #     result = ""
-    #     if not tags:
-    #         return f"No tags lmao"
-    #     notes_to_show = []
-    #     for tag in tags:
-    #         for note in self.data.values():
-    #             if (tag in note.tags) and note.name not in notes_to_show:
-    #                 result += str(self.data[note.name])
-    #                 notes_to_show.append(note.name)
-    #     if result == "":
-    #         return f"No matching notes found"
-    #     return result
+    def from_dict(self, file_data):
+        for name, value in file_data.items():
+            note = Note(name, value["text"])
+            note.tags = value["tags"]
+            self.data[note.name] = note
+
+    def save(self):
+        converted_data = self.to_dict()
+        with open("notebook_data.json", "w") as file:
+            json.dump(converted_data, file)
+        # with open("notebook_data.pickle", "wb") as file:
+        #     pickle.dump(self, file, protocol=-1)
+
+    def load(self):
+        try:
+            with open("notebook_data.json", "r") as file:
+                recovered_data = json.load(file)
+            if recovered_data != {}:
+                self.from_dict(recovered_data)
+        except FileNotFoundError:
+            print("notebook_data.json was not found")
+        # try:
+        #     with open("notebook_data.pickle", "rb") as file:
+        #         self = pickle.load(file)
+        # except FileNotFoundError:
+        #     print('File "notebook_data.pickle" was not found')
+
 
 ############################################################################################################################################################################################################
 
@@ -320,7 +339,14 @@ def help(*args):
                 {"command": "show all, number", "description": "show all contacts in console, number (optional) indicates the amount of contacts displayed per page"},
                 {"command": "goodbye", "description": "exit Phonebook manager"},
                 {"command": "close", "description": "exit Phonebook manager"},
-                {"command": "exit", "description": "exit Phonebook manager"}]
+                {"command": "exit", "description": "exit Phonebook manager"},
+                # Команди для роботи з нотатками:
+                {"command": "add note, text", "description": "Add a new note."},
+                {"command": "remove note, note name", "description": "Remove an existing note."},
+                {"command": "edit note, note name, new text", "description": "Replace the text of an existing note."},
+                {"command": "search note, keyword", "description": "Display all notes, containing the keyword (or multiple keywords) in it's name, text or tags. If the keyword is not specified, display all notes."},
+                {"command": "add tag, note name, tag", "description": "Add a tag (or multiple tags) to an existing note."},
+                {"command": "remove tag, note name, tag", "description": "Remove tag (or multiple tags) from an existing note"}]
     result = ""
     for item in commands:
         result += f'{item["command"]}: {item["description"]}\n'
@@ -396,13 +422,13 @@ def handler(command, args):
                 "edit note": notebook.edit_note,
                 "remove note": notebook.remove_note,
                 "search note": notebook.search_by_note,
-                #"search tag": notebook.search_by_tag
                 }
     return functions[command](*args)
 
 def main():
     print("Greetings, user! Phonebook manager online")
     addressbook.load()
+    notebook.load()
     while True:
         user_input = parcer(input('Enter a command: \n>>> '))
         command = user_input[0]
@@ -417,5 +443,6 @@ def main():
             result = "Seems like your list of contacts is empty. Try adding some" 
         print(result)
     addressbook.save()
+    notebook.save()
 
 main()

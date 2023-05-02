@@ -1,24 +1,16 @@
 ############################################################################################################################################################################################################
 
-# Завдання:
-
 # зберігати нотатки з текстовою інформацією;
 # проводити пошук за нотатками;
 # редагувати та видаляти нотатки;
 # додавати в нотатки "теги", ключові слова, що описують тему та предмет запису;
 # здійснювати пошук та сортування нотаток за ключовими словами (тегами);
 
-# Невирішені питання:
-
-# - Поки мені невідомий спосіб виклику цих методів, виводу результатів їхньої роботи і способу обробки помилок. Наразі відштовхувався від власної ДЗ-12.
-# - Лишається відкритим питання збереження даних у файл (як способу збереження, так і розташування файлу в системі рокистувача). - Pickle
-# - Можна додати перелік команд із їх описом, як було в Help у домашці.
-
 ############################################################################################################################################################################################################
 
 from collections import UserDict # Імпорт необхідних модулів 
 from datetime import date
-
+import json
 
 class Note(): 
 
@@ -108,5 +100,46 @@ class Notebook(UserDict):
                 result += f"Tag {tag} not found in note {note_name}\n"
         return result
 
+    def to_dict(self): # Перетворює всю інформацію про нотатки у словник, придатний для запису у файл
+        data = {}
+        for name, note in self.data.items():
+            data[name] = {"text": note.value,"tags": note.tags}
+        return data
+
+    def from_dict(self, file_data): # Перетворює словник із файлу в інформацію про нотатки
+        for name, value in file_data.items():
+            note = Note(name, value["text"])
+            note.tags = value["tags"]
+            self.data[note.name] = note
+
+    def save(self): # Зберігає словник у файл json
+        converted_data = self.to_dict()
+        with open("notebook_data.json", "w") as file:
+            json.dump(converted_data, file)
+
+    def load(self): # Завантажує словник із файлу json
+        try:
+            with open("notebook_data.json", "r") as file:
+                recovered_data = json.load(file)
+            if recovered_data != {}:
+                self.from_dict(recovered_data)
+        except FileNotFoundError:
+            print("notebook_data.json was not found")
 
 ############################################################################################################################################################################################################
+
+
+notebook = Notebook() # Створюємо екземпляр класу 
+
+
+############################################################################################################################################################################################################
+
+
+# Команди для роботи з нотатками:
+
+# {"command": "add note, text", "description": "Add a new note."},
+# {"command": "remove note, note name", "description": "Remove an existing note."},
+# {"command": "edit note, note name, new text", "description": "Replace the text of an existing note."},
+# {"command": "search note, keyword", "description": "Display all notes, containing the keyword (or multiple keywords) in it's name, text or tags. If the keyword is not specified, display all notes."},
+# {"command": "add tag, note name, tag", "description": "Add a tag (or multiple tags) to an existing note."},
+# {"command": "remove tag, note name, tag", "description": "Remove tag (or multiple tags) from an existing note"}
