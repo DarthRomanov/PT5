@@ -23,9 +23,15 @@ def add_ct(*args:tuple): #допрацювати для всіх необовя�
     name = contacts_m.Name(tupl[1])
     phone = contacts_m.Phone(tupl[2])
     Bp = None
-    if len(tupl) == 4:
-        Bp = tupl[-1]
-    rec = contacts_m.Record(name, [phone], Bp)
+    adress = None
+    mail = None
+    if len(tupl) > 3:
+        Bp = tupl[3]
+    if len(tupl) > 4:
+        adress = tupl[4]
+    if len(tupl) > 5:
+        mail = tupl[5]
+    rec = contacts_m.Record(name, [phone], Bp, adress, mail)
     if name.value in contacts:
         for key_contact in contacts:
             if key_contact == name.value and phone.value not in contacts[key_contact].phones:
