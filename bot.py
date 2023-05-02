@@ -1,279 +1,171 @@
-from collections import UserDict
-import datetime
-import pickle
-import re
+import contacts_m
+import notes
+import clener_sorter
 
-
-class Field():
-    def __init__(self, value):
-        self.value = value
-
-    
-    def __repr__(self):
-        return f"{self.value}"
-    
-
-    
-class Name(Field):
-    pass
-    
-
-class Phone(Field):
-    def __init__(self, value):
-        self.__value = None
-        self.value = value
-
-    @property
-    def value(self):
-        return self.__value
-
-    @value.setter
-    def value(self, new_value):
-        try:
-            self.__value = int(new_value)
-        except ValueError:
-            raise ValueError('Only numbers accepted')
-        
-    
-    
-    
-
-class Birthday(Field):
-    def __init__(self, value):
-        self.__value = None
-        self.value = value
-
-    @property
-    def value(self):
-        return self.__value
-
-    @value.setter
-    def value(self, new_value):
-        try:
-            self.__value = datetime(new_value)
-        except ValueError:
-            raise ValueError('Only date accepted')  
-   
-
-
-class Record:
-    def __init__(self, name:Name, phone:Phone=None, birthday:Birthday=None):
-        self.name = name
-        self.phones = [phone] if phone else []
-        self.__birthday = birthday if birthday else None
-    def add_phone(self, phone:Phone):
-        self.phones.append(phone)
-    def add_bibirthday(self, birthday:Birthday):
-        self.__birthday = birthday
-
-    
-    def change_phone(self, old_phone:Phone,  new_phone:Phone):
-        for i, p in enumerate(self.phones):
-            if old_phone.value == p.value:
-                self.phones[i] = new_phone
-                return f'Phone {old_phone} changed to phone {new_phone}'
-            
-    def delete_phone(self, phone):
-        for i, p in enumerate(self.phones):
-            if phone.value == p.value:
-                self.phones[i] = None
-                return f'phone {phone} was deleted'
-    
-    def days_to_birthday(self):
-        if self.__birthday:
-            Y_E = datetime.now(' %Y')
-            n_b = self.__birthday + Y_E + 1
-            d_n = datetime.now('%d, %m, %Y')
-            result =  n_b - d_n
-            return result
-        return None
-        
-       
-
-class AddressBook(UserDict):
-    
-    def add_record(self, record:Record):
-        self.data[record.name.value] = record
-        return f"Contact with name {record.name} added successfully"
-    
-    def __str__(self) -> str:
-        return '\n'.join([f'{r.name} : {r.phones}' for r in self.data.values()])
-    
-    def iterator(self, page=3):
-        start = 0
-
-        while True:
-            result = list(self.data)[start: start + page]
-
-            if not result:
-                break
-            yield result
-            start += page
-    def open(self):
-        try:
-            with open('contacts.bin', 'rb') as f:
-                contacts = AddressBook(pickle.load(f))
-        except EOFError:
-            pass
-        
-    def close(self):
-        with open('contacts.bin', 'wb') as f:
-            pickle.dump(contacts, f)
-    
-   
-contacts = AddressBook()
-contacts.open()
-
-
-
-def input_error(func):
+def input_errors(func):
     def inner(*args):
         try:
             return func(*args)
-        except IndexError:
-            return "Not enough params"
-        except KeyError:
-            return "No contact whith this name"
-        except ValueError:
-            return "Fail, try again"
+        except (KeyError, IndexError, ValueError):
+            return "Not enough arguments."
+        except FileNotFoundError:
+            return 'I don`t find file.'
     return inner
 
 
-def hello(*args):
-    return "How can I help you?"
+contacts = contacts_m.AddressBook
+notebook = notes.Notebook()
 
-@input_error    
-def add_ct(*args):
-    name = Name(args[0])
-    phone = Phone(args[1])
-    try:
-        birthday = Birthday(args[2])
-    except IndexError:
-        rec = Record(name, phone)
-        contacts.close()
-        return contacts.add_record(rec)
-    
-    rec = Record(name, phone, birthday)
-    contacts.close()
-    return contacts.add_record(rec)
-
-@input_error    
-def change(*args):
-    name = Name(args[0])
-    phone = Phone(args[1])
-    new_phone = Phone(args[2])
+def hello():
+    print("Hello! How can i help you?")
+def add_ct(*args:tuple): #допрацювати для всіх необовязкових параметрів
+    tupl = args[0].split(",")
+    name = contacts_m.Name(tupl[1])
+    phone = contacts_m.Phone(tupl[2])
+    Bp = None
+    if len(tupl) == 4:
+        Bp = tupl[-1]
+    rec = contacts_m.Record(name, [phone], Bp)
+    if name.value in contacts:
+        for key_contact in contacts:
+            if key_contact == name.value and phone.value not in contacts[key_contact].phones:
+                return contacts[key_contact].add_phone(name, phone)
+    else:
+        contacts.add_contact(rec)
+        return 'I add new contact'
+def add_bd(*args):
+    tupl = args[0].split(",")
+    name = contacts_m.Name(tupl[1])
+    bd = contacts_m.Birthday(tupl[2])
+    for key_contact in contacts:
+        if key_contact == name.value:
+            contacts[key_contact].birthday = tupl[2]
+@input_errors
+def dell_phone(*args:tuple):
+    tupl = args[0].split(",")
+    name = contacts_m.Name(tupl[1])
+    phone = contacts_m.Phone(tupl[2])  
+    for key_contact in contacts:
+        if key_contact == name.value:        
+            return contacts[key_contact].dell_phone(name, phone)
+    return 'I did not find an entry with the specified name' 
+@input_errors
+def dell_contact(*args:tuple):
+    tupl = args[0].split(",")
+    name = contacts_m.Name(tupl[1])
+    return contacts.dell_contact(name)
+@input_errors
+def change(*args:tuple):
+    tupl = args[0].split(",")
+    name = contacts_m.Name(tupl[1])
+    old_phone = contacts_m.Phone(tupl[2])
+    new_phone = contacts_m.Phone(tupl[3])
     rec = contacts.get(name.value)
-    if rec:
-        return rec.change_phone(phone, new_phone)
-    contacts.close()
-    return f'No record with name {name}'
-
-def delete(*args):
-    name = Name(args[0])
-    phone = Phone(args[1])
-    rec = contacts.get(name.value)
-    rec.delete_phone(phone)
-    if rec:
-        return rec.delete_phone(phone)
-    contacts.close()
-    return f'No record with name {name}'
-
-def birthday_date(*args):
-    name = Name(args[0])
-    birthday = Birthday(args[1])
-    rec = contacts.get(name.value)
-    if rec:
-        return rec.add_bibirthday(birthday)
-    return f'No record with name {name}'
-    
-
-
-def to_birthday(*args):
-    name = Name(args[0])
-    rec = Record(name)
-    rec.days_to_birthday
-    
-    
-    
-@input_error
-def phone_(*args):
-    return contacts[args[0]]
-
+    return rec.change(name, old_phone, new_phone)
+def delta_days(*args):
+    tupl = args[0].split(",")
+    name = contacts_m.Name(tupl[1])
+    return contacts[name.value].days_to_birthday()
 def show_all(*args):
-    iter = contacts.iterator()
+    tupl = args[0].split(",")
+    step = 5
+    return contacts.iteranor(step)
+def find_phone(*args:tuple):
+    tupl = args[0].split(",")
+    name = contacts_m.Name(tupl[1])
+    return contacts.find_phone(name)
+def find(*args:tuple):
+    tupl = args[0].split(",")
+    value = tupl[1]
+    return contacts.find(value)
+def clener(*args:tuple):
+    tupl = args[0].split(",")
+    arg = tupl[1]
+    clener_sorter.main_clean(arg)
+def add_nt(*args:tuple):
+    tupl = args[0].split(",")
+    notebook.add_note(tupl)
+    notebook.save
+def search_by_nt(*args:tuple):
+    tupl = args[0].split(",")
+    searchable = tupl[1]
+    notebook.search_by_note(searchable)
+def remove_nt(*args:tuple):
+    tupl = args[0].split(",")
+    note = tupl[1]
+    notebook.remove_note(note)
+    notebook.save
+def tag_add(*args:tuple):
+    tupl = args[0].split(",")
+    note = tupl[1]
+    tag = tupl[2]
+    notebook.add_tag(note, tag)
+    notebook.save
+def tag_remove(*args:tuple):
+    tupl = args[0].split(",")
+    note = tupl[1]
+    tags = []
+    for i in range(tupl[2], tupl[-1]):
+        tags.append(i)
+    notebook.remove_tag(note, tags)
+    notebook.save
+def comand_enoter():
+    return 'Unknow comand. Please, try again.'
+
+@input_errors
+def hendler(text:str):
+   
+    if text == 'hello':
+        return hello()
     
-    for rec in iter:
-        n_s = []
-        for i in rec:
-            n_s.append(f"{i} : {contacts[i]}")
-        print(n_s)
+    elif text.startswith('add contact'):
+        return add_ct(text)
+    elif text.startswith('add birthday'):
+        return add_bd(text)
+    elif text.startswith('delete phone'):
+        return dell_phone(text)
+    elif text.startswith('delete contact'):
+        return dell_contact(text)
+    elif text.startswith('change phone'):
+        return change(text)
+    elif text.startswith('days to birthday'):
+        return delta_days(text)
+    elif text.startswith('show all'):
+        return show_all()
+    elif text.startswith('find phone'):
+        return find_phone(text) 
+    elif text.startswith('find'):
+        return find(text)
+    elif text.startswith('clener'):
+        return clener(text)
+    elif text.startswith('add note'):
+        return add_nt(text)
+    elif text.startswith('search'):
+        return search_by_nt(text)
+    elif text.startswith('remove note'):
+        return remove_nt(text)
+    elif text.startswith('add tag'):
+        return tag_add(text)
+    elif text.startswith('remove tag'):
+        return tag_remove(text)
+    else:
+        return comand_enoter()
 
-def find(*args):
-    result = []
-    ch = f"{args[0]}"
-    for i, j in contacts:
-        a = re.search({ch}, i)
-        b = re.search({ch}, j)
-        if a:
-            result.append(contacts[i])
-            continue
-        if b:
-            result.append(contacts[i])
-    print(result)   
 
-def exit(*args):
-    contacts.close()
-    print('Bye')
-    
-
-def no_command(*args):
-    return 'Unknown command. Try again'
-
-def parse_input(text):
-    text_command = text.split()[0].lower()
-    match text_command:
-        case 'hello':
-            return hello, text.replace('hello', '').split()
-        case 'time':
-            return to_birthday, text.replace('birthday', '').split()
-        case 'birthday':
-            return birthday_date, text.replace('birthday', '').split()
-        case 'find':
-            return find, text.replace('find', '').split()
-        
-        case 'add':
-            return add_ct, text[len('add'):].split()
-        case 'change':
-            return change, text[len('change'):].split()
-        case 'delete':
-            return delete, text[len('change'):].split()
-        
-        case 'phone':
-            return phone_, text[len('phone'):].split()
-        case 'show':
-            if text.split()[1].lower() == 'all':
-                return show_all, str.lower(text).replace('show all', '').split()
-        case 'exit':
-            return exit, text[len('exit'):].split()
-    return no_command, []
-    
 
 def main():
-    
-    
-   
-    while True:
+    contacts.read_file
+    notebook.load
 
-        user_input = input(">>>")
-        
-        command, data = parse_input(user_input)
-        
-        print(command(*data))
-        
-        if command == exit:
+    while True:
+        input_comand = input('Pleace, enter comand:').lower()
+        if input_comand == 'exit' or input_comand =='close' or input_comand == 'good bye':
+            print("Good bye!")
+            contacts.save_file()
             break
 
-    
-
+        comand = hendler(input_comand)
+        print(comand)
+        
 if __name__ == '__main__':
     main()
