@@ -66,10 +66,10 @@ def sort_file(path, root_path):
                           
 # main           
 def main_clean(arg):
-    p = arg
+    
     
     try:
-        path = Path(sys.p)
+        path = Path(arg)
         print("Sorting the files...")
         sort_file(path, path)
         print("Sorting Completed...")   

@@ -90,30 +90,33 @@ class Record:
         self.email = email
 
     def days_to_birthday(self):
-        self.day = int(self.birthday.split('/')[0])
-        self.month = int(self.birthday.split('/')[1])
+        self.day = int(self.birthday.value.day)    
+        self.month = int(self.birthday.value.month)    
         today = datetime.today()
         bd_date = datetime(day= self.day, month= self.month, year= today.year)
         count_days = bd_date-today
-        return f'{count_days.days} days'
+        if count_days.days < 0:
+            bd_date = datetime(day= self.day, month= self.month, year= today.year + 1)
+            count_days = bd_date-today
+        return f'{count_days.days} days\n' 
 
-    def add_phone(self, name: Name, phone: Phone):
+    def add_phone(self, phone: Phone):
         if phone not in self.phones:
             self.phones.append(phone)
-            return f'I add new number phone {phone.value} to contact {name.value}.'
+            return f'I add new number phone {phone.value} to contact {self.name.value}.'
         else:
             return 'This phone number already exists.'
         
-    def dell_phone(self, name:Name, phone: Phone):
+    def dell_phone(self, phone: Phone):
         for p in self.phones:
             if p.value == phone.value:
                 self.phones.remove(p)
                 return f'I remove number phone {p.value}.'
         return f"I don't find this number."
     
-    def change(self, name: Name ,phone: Phone, new_phone: Phone):
-        self.dell_phone(name, phone)
-        self.add_phone(name, new_phone)
+    def change(self, phone: Phone, new_phone: Phone): 
+        self.dell_phone(phone)
+        self.add_phone(new_phone)
         return 'Done!'
 
     def __str__(self) -> str:
@@ -130,17 +133,24 @@ class AddressBook(UserDict):
     def add_contact(self, record: Record):
         self.data[record.name.value] = record
 
+    def display_contact(self, name):
+        output = f"---------------------------------------------------------\n{name.capitalize()}:\n"
+        for phone in self.data[name].phones:
+            output += f"{phone.value}\n"
+        return output
+
     def find_phone(self, name: Name):
         for contact in self.data:
             if contact == name.value:
                 return self.data[contact]
-        return "I don't find this contact"
+        return f"Contact {name.value} not found."
+    
     def dell_contact(self, name: Name):
         for contact in self.data:
             if contact == name.value:
                 self.data.pop(contact)
-                return f"I removed contact{name}."
-        return 'I dont find contact.'
+                return f"Contact {name} removed."
+        return f'Contact {name} not found.'
     
     def save_file (self):
         name_file = 'contacts.bin'
@@ -152,15 +162,35 @@ class AddressBook(UserDict):
         try:
             with open(name_file, "rb") as fh:
                 self.data = pickle.load(fh)
-        except EOFError:
+        except FileNotFoundError:
             pass
     
-    def iteranor(self, step):
-        lst = [f'{key}: {val.phones}' for key, val in self.data.items()]
-        lst_slice = lst[self.index:self.index + int(step)]
-        if self.index < len(lst):
-            self.index += int(step)
-        result = '\n'.join(lst_slice)
+    def iterator(self, items_per_page, *args):
+        start = 0
+        keys = list(self.data.keys())
+        while True:
+            result = ""
+            current_keys = keys[start:start + items_per_page]
+            if not current_keys:
+                break
+            for name in current_keys:
+                result += self.display_contact(name)
+            yield result
+            start += items_per_page
+
+    def show_all(self, arg = None, *args):
+        print("We made it to the contacts")
+        if arg:
+            items_per_page = int(arg)
+            result = "that was the last page \n"
+            pg = self.iterator(items_per_page)
+            for i in pg:
+                print(i)
+                input("Press Enter to see the next page\n>>>")
+        else:
+            result = ""
+            for name in self.data.keys():
+                result += self.display_contact(name)
         return result
     
     def find(self, value):
@@ -171,17 +201,10 @@ class AddressBook(UserDict):
                 for phone in rec.phones:
                     if value in phone.value:
                         print(f'{key}: {rec.phones}')
-
         return ''
     
-        
     def __str__(self):
         result = []
         for record in self.data.values():
             result.append(f"{record.name.value}: {', '.join([phone.value for phone in record.phones])} Birthday: {record.birthday}")
         return "\n".join(result)
-
-
-
-
-

@@ -1,177 +1,191 @@
 import contacts_m
 import notes
 import clener_sorter
+import dop
 
-def input_errors(func):
+def command_error(func):
     def inner(*args):
         try:
             return func(*args)
-        except (KeyError, IndexError, ValueError):
-            return "Not enough arguments."
-        except FileNotFoundError:
-            return 'I don`t find file.'
+        except KeyError:
+            return 'Unknown command, type "help" to see the list of commands'
+        except IndexError:
+            return 'IndexError occured'
+        except TypeError:
+            return 'TypeError occured'
+        except ValueError:
+            return 'ValueError occured'
     return inner
 
+def parcer(user_input):
+    user_input += ","
+    disected_input = user_input.lower().split(",")
+    disected_input.remove('')
+    results = list()
+    for i in disected_input:
+        results.append(i.lower().strip(' '))
+    return results
 
-contacts = contacts_m.AddressBook
+
+
+
+
+
+
+contacts = contacts_m.AddressBook()
 notebook = notes.Notebook()
 
-def hello():
+
+
+def greeting(*args):
     print("Hello! How can i help you?")
-def add_ct(*args:tuple): #допрацювати для всіх необовязкових параметрів
-    tupl = args[0].split(",")
-    name = contacts_m.Name(tupl[1])
-    phone = contacts_m.Phone(tupl[2])
-    Bp = None
-    adress = None
+
+def add_ct(name, phone, *args:tuple): #допрацювати для всіх необовязкових параметрів bd=None, address=None, mail=None, 
+    tupl = tuple(args)
+    name = contacts_m.Name(name)
+    phone = contacts_m.Phone(phone)
+    bd = None
+    address = None
     mail = None
-    if len(tupl) > 3:
-        Bp = tupl[3]
-    if len(tupl) > 4:
-        adress = tupl[4]
-    if len(tupl) > 5:
-        mail = tupl[5]
-    rec = contacts_m.Record(name, [phone], Bp, adress, mail)
+    if len(tupl) > 0:
+        bd = contacts_m.Birthday(tupl[0])
+    if len(tupl) > 1:
+        address = tupl[1]
+    if len(tupl) > 2:
+        mail = tupl[2]
+    rec = contacts_m.Record(name, [phone], bd, address, mail)
     if name.value in contacts:
         for key_contact in contacts:
             if key_contact == name.value and phone.value not in contacts[key_contact].phones:
-                return contacts[key_contact].add_phone(name, phone)
+                return contacts[key_contact].add_phone(phone)
     else:
         contacts.add_contact(rec)
-        return 'I add new contact'
-def add_bd(*args):
-    tupl = args[0].split(",")
-    name = contacts_m.Name(tupl[1])
-    bd = contacts_m.Birthday(tupl[2])
-    for key_contact in contacts:
-        if key_contact == name.value:
-            contacts[key_contact].birthday = tupl[2]
-@input_errors
-def dell_phone(*args:tuple):
-    tupl = args[0].split(",")
-    name = contacts_m.Name(tupl[1])
-    phone = contacts_m.Phone(tupl[2])  
+        return f'Contact {name.value} added'
+
+def add_bd(name, bd, *args):
+    name = contacts_m.Name(name)
+    bd = contacts_m.Birthday(bd)
+    if name.value in contacts.keys():
+        contacts[name.value].birthday = bd
+
+#@command_error
+def dell_phone(name, phone, *args:tuple):
+    name = contacts_m.Name(name)
+    phone = contacts_m.Phone(phone)  
     for key_contact in contacts:
         if key_contact == name.value:        
-            return contacts[key_contact].dell_phone(name, phone)
-    return 'I did not find an entry with the specified name' 
-@input_errors
-def dell_contact(*args:tuple):
-    tupl = args[0].split(",")
-    name = contacts_m.Name(tupl[1])
-    return contacts.dell_contact(name)
-@input_errors
-def change(*args:tuple):
-    tupl = args[0].split(",")
-    name = contacts_m.Name(tupl[1])
-    old_phone = contacts_m.Phone(tupl[2])
-    new_phone = contacts_m.Phone(tupl[3])
-    rec = contacts.get(name.value)
-    return rec.change(name, old_phone, new_phone)
-def delta_days(*args):
-    tupl = args[0].split(",")
-    name = contacts_m.Name(tupl[1])
-    return contacts[name.value].days_to_birthday()
-def show_all(*args):
-    tupl = args[0].split(",")
-    step = 5
-    return contacts.iteranor(step)
-def find_phone(*args:tuple):
-    tupl = args[0].split(",")
-    name = contacts_m.Name(tupl[1])
-    return contacts.find_phone(name)
-def find(*args:tuple):
-    tupl = args[0].split(",")
-    value = tupl[1]
-    return contacts.find(value)
-def clener(*args:tuple):
-    tupl = args[0].split(",")
-    arg = tupl[1]
-    clener_sorter.main_clean(arg)
-def add_nt(*args:tuple):
-    tupl = args[0].split(",")
-    notebook.add_note(tupl)
-    notebook.save
-def search_by_nt(*args:tuple):
-    tupl = args[0].split(",")
-    searchable = tupl[1]
-    notebook.search_by_note(searchable)
-def remove_nt(*args:tuple):
-    tupl = args[0].split(",")
-    note = tupl[1]
-    notebook.remove_note(note)
-    notebook.save
-def tag_add(*args:tuple):
-    tupl = args[0].split(",")
-    note = tupl[1]
-    tag = tupl[2]
-    notebook.add_tag(note, tag)
-    notebook.save
-def tag_remove(*args:tuple):
-    tupl = args[0].split(",")
-    note = tupl[1]
-    tags = []
-    for i in range(tupl[2], tupl[-1]):
-        tags.append(i)
-    notebook.remove_tag(note, tags)
-    notebook.save
-def comand_enoter():
-    return 'Unknow comand. Please, try again.'
+            return contacts[key_contact].dell_phone(phone)
+    return 'An entry with the specified name was not found' 
 
-@input_errors
-def hendler(text:str):
-   
-    if text == 'hello':
-        return hello()
+@command_error
+def dell_contact(name, *args:tuple):
+    # tupl = args[0].split(",")
+    name = contacts_m.Name(name)
+    return contacts.dell_contact(name)
+
+@command_error
+def change_phone(name, old_phone, new_phone, *args:tuple):
+    if name in contacts.keys():
+        name = contacts_m.Name(name)
+        old_phone = contacts_m.Phone(old_phone)
+        new_phone = contacts_m.Phone(new_phone)
+        record = contacts[name.value]
+        return record.change(old_phone, new_phone)
+    return f"Can't find {name} in the Addressbook"
+
+def delta_days(name, *args):
+    name = contacts_m.Name(name)
+    return contacts[name.value].days_to_birthday()
+
+def show_all(step = None, *args):
+    return contacts.show_all(step, *args)
+
+def find_phone(name, *args:tuple):
+    name = contacts_m.Name(name)
+    return contacts.find_phone(name)
+
+def find(keyword, *args:tuple):
+    return contacts.find(keyword)
+
+def cleaner(path, *args:tuple):
     
-    elif text.startswith('add contact'):
-        return add_ct(text)
-    elif text.startswith('add birthday'):
-        return add_bd(text)
-    elif text.startswith('delete phone'):
-        return dell_phone(text)
-    elif text.startswith('delete contact'):
-        return dell_contact(text)
-    elif text.startswith('change phone'):
-        return change(text)
-    elif text.startswith('days to birthday'):
-        return delta_days(text)
-    elif text.startswith('show all'):
-        return show_all()
-    elif text.startswith('find phone'):
-        return find_phone(text) 
-    elif text.startswith('find'):
-        return find(text)
-    elif text.startswith('clener'):
-        return clener(text)
-    elif text.startswith('add note'):
-        return add_nt(text)
-    elif text.startswith('search'):
-        return search_by_nt(text)
-    elif text.startswith('remove note'):
-        return remove_nt(text)
-    elif text.startswith('add tag'):
-        return tag_add(text)
-    elif text.startswith('remove tag'):
-        return tag_remove(text)
+    clener_sorter.main_clean(path)
+
+def help(*args):
+    commands = [{"command": "hello", "description": "show greeting"},
+                {"command": "help", "description": "show all available commands"},
+                {"command": "add contact, name, phone_number", "description": "add a new contact"},
+                {"command": "add birthday, name, day.month.year", "description": "add a birthday date to a contact"},
+                {"command": "delete contact, name, phone_number", "description": "delete  target contact"},
+                {"command": "delete phone, name, phone_number", "description": "delete  phone in contact"},
+                {"command": "change, name, new_phone_number", "description": "change the phone number of an existing contact"},
+                {"command": "days to birthday, name", "description": "days to birthday of contact"},
+                {"command": "show all", "description": "show all contacts"},
+                {"command": "find phone, name", "description": "show the phone number of a contact"},
+                {"command": "find , part of name  or phone", "description": "show contacts that include this part"},
+                {"command": "clener , folder", "description": "sort all file by folder"},
+                {"command": "add note, text", "description": "save note whith text"},
+                {"command": "search, keyword", "description": "Search for notes by keywords in names, contents, or tags"},
+                {"command": "remove note, note name", "description": "remove target note"},
+                {"command": "add tag, note, tegs", "description": "add tag to note"},
+                {"command": "remove tag, note, tegs", "description": "remove tag from note"},
+                {"command": "goodbye", "description": "exit Phonebook manager"},
+                {"command": "close", "description": "exit Phonebook manager"},
+                {"command": "exit", "description": "exit Phonebook manager"}]
+    result = ""
+    for item in commands:
+        result += f'{item["command"]}: {item["description"]}\n'
+    return result
+
+
+
+
+@command_error
+def handler(command, args):
+    functions = {
+                "hello": greeting,
+                "help": help,
+                "add contact": add_ct,
+                "add birthday": add_bd,
+                "change phone": change_phone,
+                "remove phone": dell_phone,
+                "remove contact": dell_contact,
+                "show all": show_all,
+                "search phone": find_phone,
+                "search name": find,
+                "days to birthday": delta_days,
+                "add note": notebook.add_note,
+                "remove note": notebook.remove_note,
+                "add tag": notebook.add_tag,
+                "remove tag": notebook.remove_tag,
+                "edit note": notebook.edit_note,
+                "search note": notebook.search_by_note,
+                "cleaner": cleaner
+                }
+    if command in functions.keys():
+        return functions[command](*args)
     else:
-        return comand_enoter()
+        return dop.cheker(command)
 
 
 
 def main():
-    contacts.read_file
-    notebook.load
+
+    contacts.read_file()
+    notebook.load()
 
     while True:
-        input_comand = input('Pleace, enter comand:').lower()
-        if input_comand == 'exit' or input_comand =='close' or input_comand == 'good bye':
-            print("Good bye!")
-            contacts.save_file()
+        user_input = parcer(input('Enter a command: \n>>> '))
+        command = user_input[0]
+        user_input.remove(command)
+        args = [arg for arg in user_input]
+        if command in ("goodbye", "close", "exit"):
+            print("Goodbye!")
             break
 
-        comand = hendler(input_comand)
-        print(comand)
-        
+        result = handler(command, args)
+        if result != "" and result != None: 
+            print(result)
+
 if __name__ == '__main__':
     main()
