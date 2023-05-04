@@ -518,7 +518,7 @@ notebook = Notebook()
 def greeting(*args):
     print("Hello! How can i help you?")
 
-def add_ct(name, phone, *args:tuple): #допрацювати для всіх необовязкових параметрів bd=None, address=None, mail=None, 
+def add_ct(name, phone, *args:tuple): 
     tupl = tuple(args)
     name = Name(name)
     phone = Phone(phone)
